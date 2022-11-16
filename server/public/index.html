@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            :root {
+                --app-border-radius: 15px;
+            }
+            .app-container {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                -ms-transform: translate(-50%, -50%);
+                transform: translate(-50%, -50%);
+                display: flex;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                width: 50%;
+                align-items: center;
+                border: 1px solid lightgray;
+                border-radius: var(--app-border-radius);
+                margin: auto;
+            }
+            .controller-section {
+                display: inline-flex;
+                flex-direction: column;
+                flex-wrap: wrap;
+                -ms-flex-wrap: wrap;
+                align-content: center;
+                width: 50%;
+                margin: 0;
+                padding: 0;
+                border: 0;
+            }
+            .controller-left {
+                background-color: #3333FF40;
+                border-radius: var(--app-border-radius) 0px 0px var(--app-border-radius);
+            }
+            .controller-right {
+                background-color: #FF333340;
+                border-radius: 0px var(--app-border-radius) var(--app-border-radius) 0px;
+            }
+            .controller-right .button.top {
+                border-radius: 0px var(--app-border-radius) 0px 0px;
+            }
+            .controller-right .button.bottom {
+                border-radius: 0px 0px var(--app-border-radius) 0px;
+            }
+            .controller-left .button.top {
+                border-radius: var(--app-border-radius) 0px 0px 0px;
+            }
+            .controller-left .button.bottom {
+                border-radius: 0px 0px 0px var(--app-border-radius);
+            }
+            .top, .bottom {
+                width: 100%;
+            }
+            .button {
+                font-size: 72px;
+                cursor: pointer;
+                border: 1px solid black;
+                padding: 3rem 0px;
+                text-align: center;
+                -webkit-touch-callout: none;
+                -webkit-user-select: none;
+                -khtml-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
+            }
+        </style>
+        
+        <script>
+
+
+            /**
+             * ---------------------------------- 
+             *          STATE MANAGEMENT
+             * ---------------------------------- 
+             */
+
+            var buttonStateCache = []
+
+            function setButtonState(button) {
+                const buttonIndex = buttonStateCache.findIndex(b => b.side === button.side && b.direction === button.direction)               
+                if (buttonIndex === -1) {
+                    buttonStateCache.push(button)
+                    return sendStateChange(button)
+                }
+                const oldButton = buttonStateCache[buttonIndex]
+                if (oldButton.state !== button.state) {
+                    buttonStateCache.splice(buttonIndex, 1, button)
+                    sendStateChange(button)
+                }
+            }
+
+            function deactivateAll() {
+                buttonStateCache.forEach(button => {
+                    if (button.state) {
+                        button.state = 0
+                        sendStateChange(button)
+                    }
+                })
+            }
+
+            function sendStateChange(button) {
+                fetch('http://127.0.0.1:3000/', {
+                    method: 'POST',
+                    body: JSON.stringify(button),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response =>
+                    response.json()
+                ).then(response => {
+                    console.log(response)
+                }).catch(error => {
+                    console.error(error)
+                })
+            }
+
+            /**
+             * ----------------------------------
+             *          EVENT LISTENERS
+             * ----------------------------------
+             */
+
+            function handleLoad() {
+                window.addEventListener('mouseup', handleGlobalEvent)
+                window.addEventListener('mouseleave', handleGlobalEvent)
+                Array.from(document.getElementsByClassName('button')).forEach(element => {
+                    element.addEventListener('mousedown', handleButtonClick)
+                    element.addEventListener('mouseup', handleButtonClick)
+                    element.addEventListener('touchstart', handleButtonClick)
+                    element.addEventListener('touchend', handleButtonClick)
+                })
+            }
+
+            function handleGlobalEvent(event) {
+                deactivateAll()
+            }
+
+            function handleButtonClick(event) {
+                setButtonState({
+                    side: event.currentTarget.dataset.side,
+                    direction: event.currentTarget.dataset.direction,
+                    state: getStateFromEventType(event.type)
+                })
+            }
+
+            /**
+             * ---------------------------------- 
+             *          HELPER METHODS
+             * ---------------------------------- 
+             */
+
+            function getStateFromEventType(type) {
+                // "mouse" and "touch" are both conveniently 5 characters long
+                type = type.substring(5, type.length)
+                if (type === 'down' || type === 'start') return 1
+                return 0
+            }
+        </script>
+    </head>
+    <body onload="handleLoad()">
+        <div class="app-container">
+            <div class="controller-section controller-left">
+                <div class="button top" data-side="left" data-direction="forward">
+                    &#11014;
+                </div>
+                <div class="button bottom" data-side="left" data-direction="back">
+                    &#11015;
+                </div>
+            </div>
+            <div class="controller-section controller-right">
+                <div class="button top" data-side="right" data-direction="forward">
+                    &#11014;
+                </div>
+                <div class="button bottom" data-side="right" data-direction="back">
+                    &#11015;
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
