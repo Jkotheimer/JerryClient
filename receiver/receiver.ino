@@ -38,8 +38,8 @@ int8_t rightMotorState = STOP;
 bool isRotating = false;
 
 // INTERNET VARIABLES
-const String ssid = "Cornelia 2S";
-const String password = "4tnayti0gd";
+const String ssid = "********";
+const String password = "********";
 bool isConnected = false;
 int numRetries = 0;
 
@@ -98,6 +98,8 @@ void connect() {
     }
   }
   Serial.println("Connected");
+
+  Serial.println(WiFi.localIP());
     
   socket.begin();
   socket.onEvent(handleWebSocketEvent);
