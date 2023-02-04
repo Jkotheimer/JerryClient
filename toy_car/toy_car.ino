@@ -6,6 +6,10 @@
 
 #endif
 
+float oneSecond = 1000000.0;
+float frequency = 500.0;
+float dutyCycle = 0.990;
+
 uint8_t rightMotorSpeed = 0;
 uint8_t leftMotorSpeed = 0;
 
@@ -16,40 +20,15 @@ void setup() {
 
   pinMode(RIGHT_FORWARD, OUTPUT);
   pinMode(RIGHT_BACKWARD, OUTPUT);
+
 }
 
 void loop() {
-  int i = 0;
-  while (i < 255) {
-    Serial.print("Writing:pin ");
-    Serial.print(RIGHT_FORWARD);
-    Serial.print(": ");
-    Serial.println(i);
-    analogWrite(RIGHT_FORWARD, i++);
-    delay(20);
-  }
-  while (i > 0) {
-    Serial.print("Writing pin ");
-    Serial.print(RIGHT_FORWARD);
-    Serial.print(": ");
-    Serial.println(i);
-    analogWrite(RIGHT_FORWARD, --i);
-    delay(10);
-  }
-  while (i < 255) {
-    Serial.print("Writing pin ");
-    Serial.print(RIGHT_BACKWARD);
-    Serial.print(": ");
-    Serial.println(i);
-    analogWrite(RIGHT_BACKWARD, i++);
-    delay(20);
-  }
-  while (i > 0) {
-    Serial.print("Writing pin ");
-    Serial.print(RIGHT_BACKWARD);
-    Serial.print(": ");
-    Serial.println(i);
-    analogWrite(RIGHT_BACKWARD, --i);
-    delay(10);
+  for (int i = 0; i < 512; i++ ) {
+    Serial.print("Analog Value: ");
+    Serial.println(255);
+    analogWrite(RIGHT_FORWARD, 255);
+    analogWrite(RIGHT_BACKWARD, 0);
+    delay(1000);
   }
 }

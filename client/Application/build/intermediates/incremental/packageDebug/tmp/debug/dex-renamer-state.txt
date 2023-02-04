@@ -1,0 +1,4 @@
+#Sat Jan 28 19:34:57 CST 2023
+base.0=/home/jack/Projects/WiFi_RC/client/Application/build/intermediates/dex/debug/mergeDexDebug/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex
