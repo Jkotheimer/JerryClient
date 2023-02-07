@@ -14,25 +14,21 @@
  * limitations under the License.
  */
 
-package com.robocat.android.rc;
+package com.robocat.android.rc.activities;
+import com.robocat.android.rc.R;
+import com.robocat.android.rc.services.BluetoothClassicService;
+import com.robocat.android.rc.services.BluetoothConfiguration;
+import com.robocat.android.rc.services.BluetoothService;
+import com.robocat.android.rc.services.BluetoothStatus;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothClass;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothManager;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
-import android.content.res.Resources;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,59 +37,96 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Activity for scanning and displaying available Bluetooth LE devices.
  */
 public class DeviceScanActivity extends ListActivity {
 
-
-    private int status;
     private Handler handler;
-    private ArrayList<BluetoothDevice> bluetoothDevices = new ArrayList<>();
-    private String[] permissions;
+    private ArrayList<BluetoothDevice> bluetoothDevices;
+    private BluetoothClassicService bluetoothClassicService;
 
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
 
-    private void setScanningStateReceiverState(Boolean active) {
-        if (active) {
-            IntentFilter scanningStateFilter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-            scanningStateFilter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-            scanningStateFilter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-            scanningStateFilter.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-            this.registerReceiver(scanningStateReceiver, scanningStateFilter);
-        } else {
-            this.unregisterReceiver(scanningStateReceiver);
+    private final BluetoothService.OnBluetoothScanCallback bluetoothScanCallback = new BluetoothService.OnBluetoothScanCallback() {
+        @Override
+        public void onDeviceDiscovered(BluetoothDevice device, int rssi) {
+
         }
-    }
+        @Override
+        public void onStartScan() {
+
+        }
+        @Override
+        public void onStopScan() {
+
+        }
+    };
+
+    private final BluetoothService.OnBluetoothEventCallback bluetoothEventCallback = new BluetoothService.OnBluetoothEventCallback() {
+        @Override
+        public void onDataRead(byte[] buffer, int length) {
+
+        }
+        @Override
+        public void onStatusChange(BluetoothStatus status) {
+
+        }
+        @Override
+        public void onDeviceName(String deviceName) {
+
+        }
+        @Override
+        public void onToast(String message) {
+
+        }
+        @Override
+        public void onDataWrite(byte[] buffer) {
+
+        }
+    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        this.handler = new Handler();
+        this.bluetoothDevices = new ArrayList<>();
+
+        BluetoothConfiguration config = new BluetoothConfiguration();
+        config.uuid = UUID.fromString("ebc8e850-3d0c-4231-42c5-3031a583d47f");
+        config.deviceName = this.getResources().getString(R.string.app_name);
+        config.bluetoothServiceClass = BluetoothClassicService.class;
+        config.context = this.getApplicationContext();
+        config.callListenersInMainThread = true;
+        config.characterDelimiter = '\n';
+        config.bufferSize = 1024;
+        BluetoothService.init(config);
+        this.bluetoothClassicService = (BluetoothClassicService) BluetoothService.getDefaultInstance();
+        this.bluetoothClassicService.setOnScanCallback(this.bluetoothScanCallback);
+        this.bluetoothClassicService.setOnEventCallback(this.bluetoothEventCallback);
+        this.bluetoothClassicService.startScan();
 
         try {
             getActionBar().setTitle(R.string.title_paired_devices);
         } catch (NullPointerException npe) {
             System.out.println("Caught an exception: " + npe.getMessage());
         }
-        this.handler = new Handler();
+    }
 
-        IntentFilter deadStateReceiverFilter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_STARTED);
-        deadStateReceiverFilter.addAction(BluetoothAdapter.ACTION_SCAN_MODE_CHANGED);
-        this.registerReceiver(bluetoothReceiver, deadStateReceiverFilter);
-
-        bluetoothAdapter.startDiscovery();
-
+    @Override
+    protected void onStop() {
+        super.onStop();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unregisterReceiver(bluetoothReceiver);
     }
 
     @Override

@@ -18,6 +18,7 @@
 
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.robocat.android.rc"
     android:versionCode="1"
     android:versionName="1.0">
@@ -41,14 +42,15 @@
         android:icon="@drawable/ic_launcher"
         android:theme="@android:style/Theme.DeviceDefault">
 
-        <activity android:name=".DeviceScanActivity" android:exported="true">
+        <activity android:name=".activities.StartupActivity" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".DeviceControlActivity"/>
-        <service android:name=".BluetoothService" android:enabled="true"/>
+        <activity android:name=".activities.DeviceScanActivity"/>
+        <activity android:name=".activities.DeviceControlActivity"/>
+        <service android:name=".services.BluetoothClassicService" android:enabled="true" tools:ignore="Instantiatable" />
     </application>
 
 </manifest>
