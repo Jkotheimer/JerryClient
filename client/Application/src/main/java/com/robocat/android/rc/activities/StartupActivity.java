@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.os.PersistableBundle;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -13,6 +14,7 @@ import com.robocat.android.rc.persistence.ApplicationDatabase;
 import com.robocat.android.rc.persistence.entities.RemoteDevice;
 import com.robocat.android.rc.persistence.entities.RemoteDeviceDao;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.disposables.Disposable;
@@ -45,19 +47,21 @@ public class StartupActivity extends Activity {
             @Override
             public void onSuccess(List<RemoteDevice> remoteDevices) {
                 self.spinner.incrementProgressBy(1);
-                Intent intent;
+                Intent intent = new Intent();
+                intent.putParcelableArrayListExtra(
+                        HomepageActivity.EXTRA_REMOTE_DEVICES,
+                        (ArrayList<RemoteDevice>) remoteDevices
+                );
                 if (remoteDevices.isEmpty()) {
-                    // Start Getting Started activity
-                    intent = new Intent(HomepageActivity.ACTION_GETTING_STARTED);
+                    intent.setAction(HomepageActivity.ACTION_GETTING_STARTED);
                 } else {
-                    // Start connection activity
-                    intent = new Intent(HomepageActivity.ACTION_PLAYGROUND);
+                    intent.setAction(HomepageActivity.ACTION_PLAYGROUND);
                 }
                 self.startActivity(intent);
             }
             @Override
             public void onError(Throwable e) {
-                // Start Getting Started activity
+                self.startActivity(new Intent(HomepageActivity.ACTION_GETTING_STARTED));
             }
         });
 

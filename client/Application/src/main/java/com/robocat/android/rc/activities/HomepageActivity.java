@@ -14,13 +14,15 @@ public class HomepageActivity extends Activity {
 
     public static final String ACTION_GETTING_STARTED = "GETTING_STARTED";
     public static final String ACTION_PLAYGROUND = "PLAYGROUND";
+    public static final String ACTION_ERROR_STATE = "ERROR_STATE";
 
     public static final String EXTRA_REMOTE_DEVICES = "REMOTE_DEVICES";
 
     private BluetoothService bluetoothService;
 
     @Override
-    public void onCreate(Bundle savedInstanceState, PersistableBundle persistableBundle) {
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         Intent intent = this.getIntent();
         String action = intent.getAction();
         if (ACTION_GETTING_STARTED.equals(action)) {
@@ -28,6 +30,8 @@ public class HomepageActivity extends Activity {
         } else if (ACTION_PLAYGROUND.equals(action)) {
             // Display available devices & attempt to connect to the default one
             List<RemoteDevice> devices = intent.getParcelableExtra(EXTRA_REMOTE_DEVICES);
+        } else if (ACTION_ERROR_STATE.equals(action)) {
+
         }
     }
 }

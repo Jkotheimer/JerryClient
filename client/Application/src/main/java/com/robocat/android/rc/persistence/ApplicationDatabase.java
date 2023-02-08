@@ -9,7 +9,7 @@ import androidx.room.RoomDatabase;
 @androidx.room.Database(entities = {RemoteDevice.class}, version = 1)
 public abstract class ApplicationDatabase extends RoomDatabase {
 
-    private static final String NAME = "RobocatRemoteDeviceDatabase";
+    private static final String NAME = "RobocatApplication.db";
     private static volatile ApplicationDatabase INSTANCE;
 
     public abstract RemoteDeviceDao remoteDeviceDao();
@@ -18,7 +18,11 @@ public abstract class ApplicationDatabase extends RoomDatabase {
         if (INSTANCE == null) {
             synchronized (ApplicationDatabase.class) {
                 if (INSTANCE == null) {
-                    INSTANCE = Room.databaseBuilder(context.getApplicationContext(), ApplicationDatabase.class, ApplicationDatabase.NAME).build();
+                    INSTANCE = Room.databaseBuilder(
+                            context.getApplicationContext(),
+                            ApplicationDatabase.class,
+                            ApplicationDatabase.NAME
+                    ).build();
                 }
             }
         }
