@@ -50,7 +50,7 @@
         </activity>
         <activity android:name=".activities.DeviceScanActivity"/>
         <activity android:name=".activities.DeviceControlActivity"/>
-        <service android:name=".services.BluetoothClassicService" android:enabled="true" tools:ignore="Instantiatable" />
+        <service android:name=".services.bluetooth.BluetoothClassicService" android:enabled="true" tools:ignore="Instantiatable" />
     </application>
 
 </manifest>

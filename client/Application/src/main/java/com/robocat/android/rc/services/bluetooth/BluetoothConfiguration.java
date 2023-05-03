@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-package com.robocat.android.rc.services;
+package com.robocat.android.rc.services.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;

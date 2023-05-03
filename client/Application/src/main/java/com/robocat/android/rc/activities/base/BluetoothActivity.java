@@ -9,8 +9,8 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
-import com.robocat.android.rc.services.BluetoothClassicService;
-import com.robocat.android.rc.services.BluetoothService;
+import com.robocat.android.rc.services.bluetooth.BluetoothClassicService;
+import com.robocat.android.rc.services.bluetooth.BluetoothService;
 
 public abstract class BluetoothActivity extends Activity {
 

@@ -3,10 +3,9 @@ package com.robocat.android.rc.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 
 import com.robocat.android.rc.persistence.entities.RemoteDevice;
-import com.robocat.android.rc.services.BluetoothService;
+import com.robocat.android.rc.services.bluetooth.BluetoothService;
 
 import java.util.List;
 

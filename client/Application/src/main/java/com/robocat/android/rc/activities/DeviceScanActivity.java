@@ -16,17 +16,16 @@
 
 package com.robocat.android.rc.activities;
 import com.robocat.android.rc.R;
-import com.robocat.android.rc.services.BluetoothClassicService;
-import com.robocat.android.rc.services.BluetoothConfiguration;
-import com.robocat.android.rc.services.BluetoothService;
-import com.robocat.android.rc.services.BluetoothStatus;
+import com.robocat.android.rc.services.bluetooth.BluetoothClassicService;
+import com.robocat.android.rc.services.bluetooth.BluetoothConfiguration;
+import com.robocat.android.rc.services.bluetooth.BluetoothService;
+import com.robocat.android.rc.services.bluetooth.BluetoothStatus;
 
 import android.app.Activity;
 import android.app.ListActivity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.LayoutInflater;
@@ -39,7 +38,6 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.UUID;
 
 /**

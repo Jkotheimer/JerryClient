@@ -35,7 +35,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package com.robocat.android.rc.services;
+package com.robocat.android.rc.services.bluetooth;
 
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -46,8 +46,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
-import android.support.annotation.RequiresPermission;
 import android.util.Log;
+
+import androidx.annotation.RequiresPermission;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -66,13 +67,13 @@ public class BluetoothClassicService extends BluetoothService {
     protected BluetoothClassicService(BluetoothConfiguration config) {
         super(config);
         this.adapter = BluetoothAdapter.getDefaultAdapter();
-        this.status = BluetoothStatus.NONE;
+        this.mStatus = BluetoothStatus.NONE;
     }
 
     // The BroadcastReceiver that listens for discovered devices and
     // changes the title when discovery is finished
     private final BroadcastReceiver mScanReceiver = new BroadcastReceiver() {
-        @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+        @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_SCAN})
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -86,36 +87,26 @@ public class BluetoothClassicService extends BluetoothService {
                 final int RSSI = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE);
 
                 if (onScanCallback != null)
-                    runOnMainThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            onScanCallback.onDeviceDiscovered(device, RSSI);
-                        }
-                    });
+                    runOnMainThread(() -> onScanCallback.onDeviceDiscovered(device, RSSI));
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 stopScan();
             }
         }
     };
 
-    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_SCAN})
     @Override
     public void startScan() {
         if (onScanCallback != null)
-            runOnMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    onScanCallback.onStartScan();
-                }
-            });
+            runOnMainThread(() -> onScanCallback.onStartScan());
 
         // Register for broadcasts when a device is discovered
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
-        config.context.registerReceiver(mScanReceiver, filter);
+        mConfig.context.registerReceiver(mScanReceiver, filter);
 
         // Register for broadcasts when discovery has finished
         filter = new IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
-        config.context.registerReceiver(mScanReceiver, filter);
+        mConfig.context.registerReceiver(mScanReceiver, filter);
 
         if (adapter.isDiscovering()) {
             adapter.cancelDiscovery();
@@ -124,11 +115,11 @@ public class BluetoothClassicService extends BluetoothService {
         adapter.startDiscovery();
     }
 
-    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH})
+    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH_ADMIN, Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_SCAN})
     @Override
     public void stopScan() {
         try {
-            config.context.unregisterReceiver(mScanReceiver);
+            mConfig.context.unregisterReceiver(mScanReceiver);
         } catch (IllegalArgumentException ex) {
             ex.printStackTrace();
         }
@@ -138,19 +129,14 @@ public class BluetoothClassicService extends BluetoothService {
         }
 
         if (onScanCallback != null)
-            runOnMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    onScanCallback.onStopScan();
-                }
-            });
+            runOnMainThread(() -> onScanCallback.onStopScan());
     }
 
     /**
      * Start the ConnectThread to initiate a connection to a remote device.
      * @param device The BluetoothDevice to connect
      */
-    @RequiresPermission(Manifest.permission.BLUETOOTH)
+    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_CONNECT})
     public synchronized void connect(BluetoothDevice device) {
         if (D)
             Log.d(TAG, "connect to: " + device);
@@ -187,10 +173,9 @@ public class BluetoothClassicService extends BluetoothService {
      * @param socket The BluetoothSocket on which the connection was made
      * @param device The BluetoothDevice that has been connected
      */
-    @RequiresPermission(Manifest.permission.BLUETOOTH)
+    @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_CONNECT})
     private synchronized void connected(BluetoothSocket socket, final BluetoothDevice device) {
-        if (D)
-            Log.d(TAG, "connected");
+        if (D) Log.d(TAG, "connected");
 
         // Start the thread to manage the connection and perform transmissions
         connectedThread = new ConnectedThread(socket);
@@ -198,15 +183,7 @@ public class BluetoothClassicService extends BluetoothService {
 
         // Send the name of the connected device back to the UI Activity
         if (onEventCallback != null)
-            runOnMainThread(new Runnable() {
-
-                @RequiresPermission(Manifest.permission.BLUETOOTH)
-                @Override
-                public void run() {
-                    onEventCallback.onDeviceName(device.getName());
-                }
-
-            });
+            runOnMainThread(() -> onEventCallback.onDeviceName(device.getName()));
 
         updateState(BluetoothStatus.CONNECTED);
     }
@@ -215,13 +192,15 @@ public class BluetoothClassicService extends BluetoothService {
      * Stop all threads
      */
     public synchronized void stopService() {
-        if (D)
+        if (D) {
             Log.d(TAG, "stop");
+        }
 
         disconnect();
 
-        if (BluetoothService.defaultServiceInstance == this)
+        if (BluetoothService.defaultServiceInstance == this) {
             BluetoothService.defaultServiceInstance = null;
+        }
     }
 
     /**
@@ -233,22 +212,14 @@ public class BluetoothClassicService extends BluetoothService {
     }
 
     /**
-     * Write to the ConnectedThread in an unsynchronized manner
-     *
      * @param out The bytes to write
      */
     public synchronized void write(byte[] out) {
-        // Create temporary object
-        ConnectedThread r;
         // Synchronize a copy of the ConnectedThread
-
-        if (status != BluetoothStatus.CONNECTED)
-            return;
-
-        r = connectedThread;
-
-        // Perform the write unsynchronized
-        r.write(out);
+        if (BluetoothStatus.CONNECTED.equals(mStatus) && null != connectedThread) {
+            // Perform the write synchronously
+            connectedThread.write(out);
+        }
     }
 
     /**
@@ -258,13 +229,9 @@ public class BluetoothClassicService extends BluetoothService {
         updateState(BluetoothStatus.NONE);
 
         // Send a failure message back to the Activity
-        if (onEventCallback != null)
-            runOnMainThread(new Runnable() {
-                @Override
-                public void run() {
-               onEventCallback.onToast("Could not connect to device");
-                }
-            });
+        if (onEventCallback != null) {
+            runOnMainThread(() -> onEventCallback.onToast("Could not connect to device"));
+        }
     }
 
     /**
@@ -274,14 +241,9 @@ public class BluetoothClassicService extends BluetoothService {
         updateState(BluetoothStatus.NONE);
 
         // Send a failure message back to the Activity
-
-        if (onEventCallback != null)
-            runOnMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    onEventCallback.onToast("Connection lost");
-                }
-            });
+        if (onEventCallback != null) {
+            runOnMainThread(() -> onEventCallback.onToast("Connection lost"));
+        }
     }
 
     /**
@@ -292,19 +254,19 @@ public class BluetoothClassicService extends BluetoothService {
         private final BluetoothSocket mmSocket;
         private final BluetoothDevice mmDevice;
 
-        @RequiresPermission(Manifest.permission.BLUETOOTH)
+        @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_CONNECT})
         public ConnectingThread(BluetoothDevice device) {
             mmDevice = device;
             BluetoothSocket tmp = null;
 
             // Get a BluetoothSocket for a connection with the given BluetoothDevice
             try {
-                tmp = device.createRfcommSocketToServiceRecord(config.uuid);
+                tmp = device.createRfcommSocketToServiceRecord(mConfig.uuid);
             } catch (Exception e) {
                 Log.e(TAG, "create() failed", e);
             }
             try {
-                AudioManager mAudioManager = (AudioManager) config.context.getSystemService(Context.AUDIO_SERVICE);
+                AudioManager mAudioManager = (AudioManager) mConfig.context.getSystemService(Context.AUDIO_SERVICE);
                 //For phone speaker(loadspeaker)
                 mAudioManager.setMode(AudioManager.MODE_NORMAL);
                 mAudioManager.setBluetoothScoOn(false);
@@ -315,7 +277,7 @@ public class BluetoothClassicService extends BluetoothService {
             mmSocket = tmp;
         }
 
-        @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_ADMIN})
+        @RequiresPermission(allOf = {Manifest.permission.BLUETOOTH, Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT})
         public void run() {
             Log.i(TAG, "BEGIN mConnectThread");
             setName("ConnectThread");
@@ -394,9 +356,9 @@ public class BluetoothClassicService extends BluetoothService {
         public void run() {
             Log.i(TAG, "BEGIN mConnectedThread");
             byte temp;
-            final byte[] buffer = new byte[config.bufferSize];
+            final byte[] buffer = new byte[ mConfig.bufferSize];
             int i = 0;
-            byte byteDelimiter = (byte) config.characterDelimiter;
+            byte byteDelimiter = (byte) mConfig.characterDelimiter;
             // Keep listening to the InputStream while connected
             while (!canceled) {
                 try {
@@ -431,12 +393,7 @@ public class BluetoothClassicService extends BluetoothService {
             final byte[] data = new byte[i];
             System.arraycopy(buffer, 0, data, 0, i);
             if (onEventCallback != null) {
-                runOnMainThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        onEventCallback.onDataRead(data, data.length);
-                    }
-                });
+                runOnMainThread(() -> onEventCallback.onDataRead(data, data.length));
             }
         }
 
@@ -450,13 +407,9 @@ public class BluetoothClassicService extends BluetoothService {
                 mmOutStream.write(buffer);
                 mmOutStream.flush();
 
-                if (onEventCallback != null)
-                    runOnMainThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            onEventCallback.onDataWrite(buffer);
-                        }
-                    });
+                if (onEventCallback != null) {
+                    runOnMainThread(() -> onEventCallback.onDataWrite(buffer));
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Exception during write", e);
             }

@@ -22,39 +22,13 @@
  * SOFTWARE.
  */
 
-package com.robocat.android.rc.services;
-
-import android.bluetooth.BluetoothDevice;
+package com.robocat.android.rc.services.bluetooth;
 
 /**
- * Created by Douglas on 16/09/2014.
+ * Created by douglas on 25/11/14.
  */
-public class BluetoothDeviceDecoratorNull extends BluetoothDeviceDecorator {
-
-    private BluetoothDeviceDecoratorNull(BluetoothDevice device) {
-        super(device);
-    }
-
-    public static BluetoothDeviceDecoratorNull getInstance() {
-        return new BluetoothDeviceDecoratorNull(null);
-    }
-
-    @Override
-    public String getName() {
-        return "No device found";
-    }
-
-    @Override
-    public String getAddress() {
-        return "";
-    }
-
-    @Override
-    public int getRSSI() {
-        return 9999;
-    }
-
-    @Override
-    public void setRSSI(int RSSI) {
-    }
+public enum BluetoothStatus {
+    CONNECTED,
+    CONNECTING,
+    NONE
 }

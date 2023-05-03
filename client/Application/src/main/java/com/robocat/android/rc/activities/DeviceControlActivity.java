@@ -33,7 +33,7 @@ import android.widget.TextView;
 
 import com.robocat.android.rc.R;
 import com.robocat.android.rc.SampleGattAttributes;
-import com.robocat.android.rc.services.BluetoothService;
+import com.robocat.android.rc.services.bluetooth.BluetoothService;
 
 import java.util.ArrayList;
 import java.util.HashMap;

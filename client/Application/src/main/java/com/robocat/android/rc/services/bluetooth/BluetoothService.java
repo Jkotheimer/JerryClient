@@ -22,73 +22,29 @@
  * SOFTWARE.
  */
 
-package com.robocat.android.rc.services;
+package com.robocat.android.rc.services.bluetooth;
 
+import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.os.Handler;
 import android.util.Log;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Created by douglas on 23/03/15.
  * Extended by jack on 04/02/23.
  */
-public abstract class BluetoothService {
-    // Debugging
+public abstract class BluetoothService extends Service {
     private static final String TAG = BluetoothService.class.getSimpleName();
     protected static final boolean D = true;
 
     protected static BluetoothService defaultServiceInstance;
-    protected BluetoothConfiguration config;
-    protected BluetoothStatus status;
+    protected BluetoothConfiguration mConfig;
+    protected BluetoothStatus mStatus;
 
-    private final Handler handler;
+    protected Handler handler;
 
     protected OnBluetoothEventCallback onEventCallback;
-
     protected OnBluetoothScanCallback onScanCallback;
-
-    protected BluetoothService(BluetoothConfiguration config) {
-        this.config = config;
-        this.status = BluetoothStatus.NONE;
-        this.handler = new Handler();
-    }
-
-    /**
-     * Configures and initialize the BluetoothService singleton instance.
-     * @param config The configuration to use for all future services.
-     */
-    public static void init(BluetoothConfiguration config) {
-        if (defaultServiceInstance != null) {
-            defaultServiceInstance.stopService();
-            defaultServiceInstance = null;
-        }
-        try {
-            Constructor<? extends BluetoothService> constructor =
-                    (Constructor<? extends BluetoothService>) config.bluetoothServiceClass.getDeclaredConstructors()[0];
-            constructor.setAccessible(true);
-            defaultServiceInstance = constructor.newInstance(config);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Get the BluetoothService singleton instance.
-     * @return {@link BluetoothService}
-     */
-    public synchronized static BluetoothService getDefaultInstance() {
-        if (defaultServiceInstance == null) {
-            throw new IllegalStateException("BluetoothService is not initialized. Call BluetoothService.init(config).");
-        }
-        return defaultServiceInstance;
-    }
 
     public void setOnEventCallback(OnBluetoothEventCallback onEventCallback) {
         this.onEventCallback = onEventCallback;
@@ -99,25 +55,21 @@ public abstract class BluetoothService {
     }
 
     public BluetoothConfiguration getConfiguration() {
-        return config;
+        return mConfig;
     }
 
     protected synchronized void updateState(final BluetoothStatus status) {
-        Log.v(TAG, "updateStatus() " + this.status + " -> " + status);
-        this.status = status;
+        Log.v(TAG, "updateStatus() " + this.mStatus + " -> " + status);
+        this.mStatus = status;
 
         // Give the new state to the Handler so the UI Activity can update
-        if (onEventCallback != null)
-            runOnMainThread(new Runnable() {
-                @Override
-                public void run() {
-                    onEventCallback.onStatusChange(status);
-                }
-            });
+        if (onEventCallback != null) {
+            runOnMainThread(() -> onEventCallback.onStatusChange(status));
+        }
     }
 
     protected void runOnMainThread(final Runnable runnable, final long delayMillis) {
-        if (config.callListenersInMainThread) {
+        if (mConfig.callListenersInMainThread) {
             if (delayMillis > 0) {
                 handler.postDelayed(runnable, delayMillis);
             } else {
@@ -155,7 +107,7 @@ public abstract class BluetoothService {
      * @return BluetoothStatus
      */
     public synchronized BluetoothStatus getStatus() {
-        return status;
+        return mStatus;
     }
 
     /**
