@@ -15,13 +15,22 @@ export const getStreams = (req: Request, res: Response) => {
     });
 };
 
-export const createStream = async (req: Request, res: Response) => {
-    const stream = req.body as StreamDocument;
+export const readyToStream = async (req: Request, res: Response) => {
+    const body = req.body;
     try {
-        await stream.save();
-        res.json({
-            message: "Success!"
-        }).send(200);
+        res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+        });
+        let count = 0
+        const i = setInterval(() => {
+            res.write('data: hello!\n\n')
+            if (++count > 60) {
+                clearInterval(i);
+                res.end();
+            }
+        }, 1000);
     } catch (error) {
         console.error("error:", error);
         res.json({
